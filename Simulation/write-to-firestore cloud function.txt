@@ -1,0 +1,24 @@
+import base64
+import json
+from google.cloud import firestore
+from time import time
+
+def write_to_firestore(event, context):
+    """Triggered from a message on a Cloud Pub/Sub topic.
+    Args:
+         event (dict): Event payload.
+         context (google.cloud.functions.Context): Metadata for the event.
+    """
+    pubsub_message = base64.b64decode(event['data']).decode('utf-8')
+    cf_msg_receive = time()
+    msg_dict = dict(json.loads(pubsub_message))
+    fdb = firestore.Client()
+    entry_id = msg_dict['id']
+    helio_id = msg_dict['helio_id']
+    msg_dict['Timestamps']["firestore_cf_msg_receive"] = cf_msg_receive
+    ref_heliostat = fdb.collection(u'helio_field').document(u'heliostat{}'.format(helio_id))
+    ref_tel = ref_heliostat.collection(u'telemetry').document(u'{}'.format(entry_id)).set(msg_dict)
+	
+	
+requirements.txt
+google-cloud-firestore>=1.6.2
